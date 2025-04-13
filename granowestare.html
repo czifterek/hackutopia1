@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Nowe czy Stare?</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      transition: background-color 0.3s;
+      background-color: white;
+      color: black;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #555;
+    }
+    #word {
+      font-size: 32px;
+      margin: 20px 0;
+    }
+    #feedback {
+      font-size: 24px;
+      margin: 10px;
+      height: 30px;
+    }
+    #timer {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Nowe czy Stare?</h1>
+  <p>Masz 3 sekundy na odpowiedź!</p>
+  <div id="round">Runda: 1/15</div>
+  <div id="word">Kliknij "Start"</div>
+  <div id="timer"></div>
+  <div id="feedback"></div>
+  <button onclick="checkAnswer('nowe')">Nowe</button>
+  <button onclick="checkAnswer('stare')">Stare</button>
+  <br><br>
+  <button onclick="startGame()">Start</button>
+  <div id="result"></div>
+
+  <script>
+    const wordBank = [
+      "pies", "kot", "dom", "drzewo", "samochód", "telefon", "komputer",
+      "okno", "krzesło", "stół", "książka", "słońce", "księżyc", "rower",
+      "klucz", "woda", "ognisko", "las", "chmura", "lampa"
+    ];
+
+    let usedWords = [];
+    let currentWord = "";
+    let isNew = true;
+    let round = 0;
+    let score = 0;
+    let answered = false;
+    let timeoutId;
+    let timerInterval;
+    let timeLeft = 3;
+
+    function startGame() {
+      usedWords = [];
+      round = 0;
+      score = 0;
+      answered = false;
+      document.body.style.backgroundColor = "white";
+      document.getElementById("result").textContent = "";
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("timer").textContent = "";
+      document.getElementById("word").textContent = "";
+      nextRound();
+    }
+
+    function nextRound() {
+      if (round >= 15) {
+        document.getElementById("word").textContent = "Koniec gry!";
+        document.getElementById("result").textContent = `Wynik: ${score}/15`;
+        document.getElementById("feedback").textContent = "";
+        clearInterval(timerInterval);
+        return;
+      }
+
+      round++;
+      answered = false;
+      document.body.style.backgroundColor = "white";
+      document.getElementById("round").textContent = `Runda: ${round}/15`;
+
+      const showNew = Math.random() < 0.7 || usedWords.length === 0;
+
+      if (showNew) {
+        const newWords = wordBank.filter(w => !usedWords.includes(w));
+        currentWord = newWords[Math.floor(Math.random() * newWords.length)];
+        isNew = true;
+      } else {
+        currentWord = usedWords[Math.floor(Math.random() * usedWords.length)];
+        isNew = false;
+      }
+
+      document.getElementById("word").textContent = currentWord;
+
+      timeLeft = 3;
+      updateTimer();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+        }
+      }, 1000);
+
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (!answered) {
+          document.body.style.backgroundColor = "red";
+          document.getElementById("timer").textContent = "";
+          showFeedback("⏱ Za wolno! Gra zresetowana", "white");
+          setTimeout(() => {
+            startGame();
+          }, 1500);
+        }
+      }, 3000);
+    }
+
+    function updateTimer() {
+      document.getElementById("timer").textContent = `⏱ Czas: ${timeLeft}s`;
+    }
+
+    function checkAnswer(answer) {
+      if (answered) return;
+      answered = true;
+      clearTimeout(timeoutId);
+      clearInterval(timerInterval);
+      document.getElementById("timer").textContent = "";
+
+      if ((answer === 'nowe' && isNew) || (answer === 'stare' && !isNew)) {
+        score++;
+        showFeedback("✅ Poprawnie!", "green");
+        if (!usedWords.includes(currentWord)) {
+          usedWords.push(currentWord);
+        }
+        setTimeout(() => {
+          document.getElementById("feedback").textContent = "";
+          nextRound();
+        }, 300);
+      } else {
+        document.body.style.backgroundColor = "red";
+        showFeedback("❌ Błąd! Gra zresetowana", "white");
+        setTimeout(() => {
+          startGame();
+        }, 1500);
+      }
+    }
+
+    function showFeedback(msg, color) {
+      const feedback = document.getElementById("feedback");
+      feedback.textContent = msg;
+      feedback.style.color = color;
+    }
+  </script>
+
+</body>
+</html>
